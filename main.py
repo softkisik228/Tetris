@@ -1,4 +1,5 @@
 import pygame
+import time
 from random import randint
 
 
@@ -20,7 +21,7 @@ class GameWindow:
                                        (size[1] - self.height * self.cell_size) // 2 + y * self.cell_size))
                 pygame.draw.rect(screen, (255, 255, 255),
                                   ((size[0] - self.width * self.cell_size) // 2 + x * self.cell_size, 
-                                   (size[1] - self.height * self.cell_size) // 2 + y * self.cell_size, self.cell_size, self.cell_size), 1)
+                                   (size[1] - self.height * self.cell_size) // 2 + y * self.cell_size, self.cell_size, self.cell_size), 1) 
     
     def set_ceil(self, x, y, ceil):
         if not self.board[y][x]:
@@ -80,16 +81,22 @@ class GameWindow:
         return self.board
                     
     def move_figure_right(self, id):
-        print(id)
         copy_board = self.board.copy()
         for y in range(self.height):
             for x in range(self.width - 1, -1, -1):
-                if copy_board[y][x]:
-                    print(copy_board[y][x].get_id())
                 if (copy_board[y][x] and copy_board[y][x].get_id() == id):
                     self.board[y][x], self.board[y][x + 1] = 0, self.board[y][x]
+        self.render(screen, size)
+        pygame.display.flip()
 
-
+    def move_figure_left(self, id):
+        copy_board = self.board.copy()
+        for y in range(self.height):
+            for x in range(1, self.width):
+                if (copy_board[y][x] and copy_board[y][x].get_id() == id):
+                    self.board[y][x], self.board[y][x - 1] = 0, self.board[y][x]
+        self.render(screen, size)
+        pygame.display.flip()
 
 class Ceil:
     def __init__(self, color, last_id):
@@ -151,6 +158,18 @@ class Figure:
         if can_i_move:
             board.move_figure_right(self.id)
 
+    def move_left(self, width, height, copy_board):
+        can_i_move = True
+        for y in range(height):
+            for x in range(width):
+                if x != 0:
+                    if (copy_board[y][x] and copy_board[y][x].get_id() == self.id) and (copy_board[y][x - 1] and (copy_board[y][x - 1].get_id() != self.id)):
+                        can_i_move = False
+                elif copy_board[y][x] and copy_board[y][x].get_id() == self.id:
+                    can_i_move = False
+        if can_i_move:
+            board.move_figure_left(self.id)
+
 
 if __name__ == '__main__':
     pygame.init()
@@ -160,7 +179,7 @@ if __name__ == '__main__':
 
     running = True
 
-    fps = 10
+    fps = 1
     clock = pygame.time.Clock()
 
     last_id = 0
@@ -179,8 +198,10 @@ if __name__ == '__main__':
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT:
                     fig.move_right(width, height, board.get_board())
+                if event.key == pygame.K_LEFT:
+                    fig.move_left(width, height, board.get_board())
         board.render(screen, size)
         board.cells_down()
-        clock.tick(fps)
+        time.sleep(fps)
         pygame.display.flip()
     pygame.quit()

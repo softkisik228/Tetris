@@ -1,5 +1,4 @@
 import pygame
-import time
 from random import randint
 
 
@@ -98,6 +97,18 @@ class GameWindow:
         self.render(screen, size)
         pygame.display.flip()
 
+    def check_tetris(self):
+        for y in range(self.height):
+            c = 0
+            for x in range(self.width):
+                if self.board[y][x]:
+                    c += 1
+            if c == self.width:
+                new_board = [[0] * self.width]
+                new_board.extend(self.board[:y])
+                new_board.extend(self.board[y + 1:])
+                self.board = new_board.copy()
+
 class Ceil:
     def __init__(self, color, last_id):
         self.color = color
@@ -119,13 +130,14 @@ class Ceil:
     def dieing(self):
         self.die = True
     
-    def set_die(self, height, width, board):
+    def set_die(self, height, width, c_board):
         for y in range(height - 1, -1, -1):
             for x in range(width):
-                if board[y][x]:
-                    if board[y][x].get_id() == self.id_figure:
-                        board[y][x].dieing()
+                if c_board[y][x]:
+                    if c_board[y][x].get_id() == self.id_figure:
+                        c_board[y][x].dieing()
         global fig
+        board.check_tetris()
         fig = Figure(randint(0, 6), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
 
 class Figure:
@@ -179,7 +191,7 @@ if __name__ == '__main__':
 
     running = True
 
-    fps = 1
+    fps = 4
     clock = pygame.time.Clock()
 
     last_id = 0
@@ -202,6 +214,6 @@ if __name__ == '__main__':
                     fig.move_left(width, height, board.get_board())
         board.render(screen, size)
         board.cells_down()
-        time.sleep(fps)
+        clock.tick(fps)
         pygame.display.flip()
     pygame.quit()

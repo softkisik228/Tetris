@@ -41,8 +41,6 @@ class GameWindow:
                         self.board = [[0] * self.width for _ in range(self.height)].copy()
                         running = False
                 pygame.display.flip()
-            global fig
-            fig = Figure(randint(0, 6), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
             return True
 
                 
@@ -108,6 +106,9 @@ class GameWindow:
                 new_board.extend(self.board[:y])
                 new_board.extend(self.board[y + 1:])
                 self.board = new_board.copy()
+        
+    def figure_rotate(self, id, type):
+        pass
 
 class Ceil:
     def __init__(self, color, last_id):
@@ -149,15 +150,17 @@ class Figure:
                       4: [[1, 4], [0, 4], [0, 5], [1, 5]],
                       5: [[1, 6], [0, 4], [0, 5], [1, 5]],
                       6: [[1, 4], [0, 4], [0, 5], [1, 3]],}
+        self.type = type
+        self.id = id
+        global last_id
         for i in self.types[type]:
             cel = Ceil(color, id)
             if board.set_ceil(i[1], i[0], cel):
+                global fig
+                fig = Figure(randint(0, 6), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
                 break
-            self.type = type
-            self.id = id
-            global last_id
-            last_id += 1
-
+        last_id += 1
+            
     def move_right(self, width, height, copy_board):
         can_i_move = True
         for y in range(height):
@@ -181,6 +184,10 @@ class Figure:
                     can_i_move = False
         if can_i_move:
             board.move_figure_left(self.id)
+        
+    def rotate(self):
+        board.figure_rotate(self.id, self.type)
+
 
 
 if __name__ == '__main__':
@@ -191,7 +198,7 @@ if __name__ == '__main__':
 
     running = True
 
-    fps = 4
+    fps = 15
     clock = pygame.time.Clock()
 
     last_id = 0

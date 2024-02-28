@@ -286,7 +286,30 @@ class GameWindow:
                                 self.render(screen, size)
                                 pygame.display.flip()
                                 break
-
+            case 6:
+                f = False
+                for y in range(self.height - 3):
+                    if f:
+                        break
+                    for x in range(self.width - 1):
+                        if self.board[y][x] and self.board[y + 1][x - 1] and self.board[y][x + 1] and self.board[y][x].get_id() ==  self.board[y + 1][x - 1].get_id() == self.board[y][x + 1].get_id() == id:
+                            if not self.board[y - 1][x] and not self.board[y + 1][x + 1]:
+                                self.board[y + 1][x - 1], self.board[y + 1][x] = 0, 0
+                                self.set_ceil(x, y - 1, ceil)
+                                self.set_ceil(x + 1, y + 1, ceil)
+                                f = True
+                                self.render(screen, size)
+                                pygame.display.flip()
+                                break
+                        elif self.board[y][x] and self.board[y + 1][x + 1] and self.board[y + 2][x + 1] and self.board[y][x].get_id() == self.board[y + 1][x + 1].get_id() == self.board[y + 2][x + 1].get_id() == id:
+                            if x < self.width - 2 and not self.board[y + 1][x + 2] and not self.board[y + 2][x]:
+                                self.board[y][x], self.board[y + 1][x] = 0, 0
+                                self.set_ceil(x, y + 2, ceil)
+                                self.set_ceil(x + 2, y + 1, ceil)
+                                f = True
+                                self.render(screen, size)
+                                pygame.display.flip()
+                                break
 
 
 class Ceil:
@@ -318,7 +341,7 @@ class Ceil:
                         c_board[y][x].dieing()
         global fig
         board.check_tetris()
-        fig = Figure(randint(0, 3), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
+        fig = Figure(randint(0, 5), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
 
 class Figure:
     def __init__(self, type, color, id):
@@ -337,7 +360,7 @@ class Figure:
             
             if board.set_ceil(i[1], i[0], self.ceil):
                 global fig
-                fig = Figure(randint(0, 3), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
+                fig = Figure(randint(0, 5), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
                 break
         last_id += 1
             
@@ -388,7 +411,7 @@ if __name__ == '__main__':
 
     board = GameWindow(width, height)
     
-    fig = Figure(5, (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
+    fig = Figure(6, (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
 
     while running:
         for event in pygame.event.get():

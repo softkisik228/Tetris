@@ -107,9 +107,36 @@ class GameWindow:
                 new_board.extend(self.board[y + 1:])
                 self.board = new_board.copy()
         
-    def figure_rotate(self, id, type):
-        pass
-
+    def figure_rotate(self, id, type, ceil):
+        match type:
+            case 0:
+                f = False
+                for y in range(self.height - 3):
+                    if f:
+                        break
+                    for x in range(self.width):
+                        if x < self.width - 1 and y > 2:
+                            if x < self.width - 3 and self.board[y][x] and self.board[y][x + 3] and self.board[y][x].get_id() == self.board[y][x + 3].get_id() == id:
+                                print(1)
+                                if not self.board[y - 3][x + 1] and not self.board[y - 2][x + 1] and not self.board[y - 1][x + 1]:
+                                    self.board[y][x], self.board[y][x + 2], self.board[y][x + 3] = 0, 0, 0
+                                    self.set_ceil(x + 1, y - 3, ceil)
+                                    self.set_ceil(x + 1, y - 2, ceil)
+                                    self.set_ceil(x + 1, y - 1, ceil)
+                                    f = True
+                                    self.render(screen, size)
+                                    pygame.display.flip()
+                                    break
+                            elif self.board[y][x] and self.board[y + 3][x] and self.board[y][x].get_id() == self.board[y + 3][x].get_id() == id:
+                                if x > 1 and not self.board[y + 3][x + 1] and not self.board[y + 3][x - 1] and not self.board[y + 3][x - 2]:
+                                    self.board[y][x], self.board[y + 1][x], self.board[y + 2][x] = 0, 0, 0
+                                    self.set_ceil(x + 1, y + 3, ceil)
+                                    self.set_ceil(x - 1, y + 3, ceil)
+                                    self.set_ceil(x - 2, y + 3, ceil)
+                                    f = True
+                                    self.render(screen, size)
+                                    pygame.display.flip()
+                                    break
 class Ceil:
     def __init__(self, color, last_id):
         self.color = color
@@ -139,7 +166,7 @@ class Ceil:
                         c_board[y][x].dieing()
         global fig
         board.check_tetris()
-        fig = Figure(randint(0, 6), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
+        fig = Figure(0, (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
 
 class Figure:
     def __init__(self, type, color, id):
@@ -152,12 +179,13 @@ class Figure:
                       6: [[1, 4], [0, 4], [0, 5], [1, 3]],}
         self.type = type
         self.id = id
+        self.ceil = Ceil(color, id)
         global last_id
         for i in self.types[type]:
-            cel = Ceil(color, id)
-            if board.set_ceil(i[1], i[0], cel):
+            
+            if board.set_ceil(i[1], i[0], self.ceil):
                 global fig
-                fig = Figure(randint(0, 6), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
+                fig = Figure(0, (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
                 break
         last_id += 1
             
@@ -186,7 +214,7 @@ class Figure:
             board.move_figure_left(self.id)
         
     def rotate(self):
-        board.figure_rotate(self.id, self.type)
+        board.figure_rotate(self.id, self.type, self.ceil)
 
 
 
@@ -198,7 +226,7 @@ if __name__ == '__main__':
 
     running = True
 
-    fps = 15
+    fps = 4
     clock = pygame.time.Clock()
 
     last_id = 0
@@ -208,7 +236,7 @@ if __name__ == '__main__':
 
     board = GameWindow(width, height)
     
-    fig = Figure(randint(0, 6), (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
+    fig = Figure(0, (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
 
     while running:
         for event in pygame.event.get():
@@ -219,6 +247,8 @@ if __name__ == '__main__':
                     fig.move_right(width, height, board.get_board())
                 if event.key == pygame.K_LEFT:
                     fig.move_left(width, height, board.get_board())
+                if event.key == pygame.K_UP:
+                    fig.rotate()
         board.render(screen, size)
         board.cells_down()
         clock.tick(fps)

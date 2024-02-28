@@ -117,7 +117,6 @@ class GameWindow:
                     for x in range(self.width):
                         if x < self.width - 1 and y > 2:
                             if x < self.width - 3 and self.board[y][x] and self.board[y][x + 3] and self.board[y][x].get_id() == self.board[y][x + 3].get_id() == id:
-                                print(1)
                                 if not self.board[y - 3][x + 1] and not self.board[y - 2][x + 1] and not self.board[y - 1][x + 1]:
                                     self.board[y][x], self.board[y][x + 2], self.board[y][x + 3] = 0, 0, 0
                                     self.set_ceil(x + 1, y - 3, ceil)
@@ -137,6 +136,54 @@ class GameWindow:
                                     self.render(screen, size)
                                     pygame.display.flip()
                                     break
+            case 1:
+                f = False
+                for y in range(self.height - 3):
+                    if f:
+                        break
+                    for x in range(self.width):
+                        if x < self.width - 2 and self.board[y][x] and self.board[y][x + 2] and self.board[y + 1][x] and self.board[y][x].get_id() == self.board[y][x + 2].get_id() == self.board[y + 1][x].get_id() == id:
+                            if not self.board[y - 1][x] and not self.board[y - 1][x + 1] and not self.board[y + 1][x + 1]:
+                                self.board[y][x], self.board[y + 1][x], self.board[y][x + 2] = 0, 0, 0
+                                self.set_ceil(x, y - 1, ceil)
+                                self.set_ceil(x + 1, y - 1, ceil)
+                                self.set_ceil(x + 1, y + 1, ceil)
+                                f = True
+                                self.render(screen, size)
+                                pygame.display.flip()
+                                break
+                        elif x < self.width - 2 and self.board[y][x] and self.board[y][x + 1] and  self.board[y + 2][x + 1] and self.board[y][x].get_id() == self.board[y][x + 1].get_id() == id == self.board[y + 2][x + 1].get_id():
+                            if not self.board[y + 1][x] and not self.board[y][x + 2] and not self.board[y + 1][x + 2]:
+                                self.board[y][x], self.board[y][x + 1], self.board[y + 2][x + 1] = 0, 0, 0
+                                self.set_ceil(x, y + 1, ceil)
+                                self.set_ceil(x + 2, y, ceil)
+                                self.set_ceil(x + 2, y + 1, ceil)
+                                f = True
+                                self.render(screen, size)
+                                pygame.display.flip()
+                                break
+                        elif self.board[y][x] and self.board[y + 1][x] and self.board[y + 1][x - 2] and self.board[y][x].get_id() == self.board[y + 1][x].get_id() ==  self.board[y + 1][x - 2].get_id() == id:
+                            if not self.board[y][x - 1] and not self.board[y + 2][x] and not self.board[y + 2][x - 1]:
+                                self.board[y][x], self.board[y + 1][x], self.board[y + 1][x - 2] = 0, 0, 0
+                                self.set_ceil(x - 1, y, ceil)
+                                self.set_ceil(x, y + 2, ceil)
+                                self.set_ceil(x - 1, y + 2, ceil)
+                                f = True
+                                self.render(screen, size)
+                                pygame.display.flip()
+                                break
+                        elif x >= 1 and x < self.width - 1 and self.board[y][x] and self.board[y + 2][x] and self.board[y + 2][x + 1] and self.board[y][x].get_id() == self.board[y + 2][x].get_id() == self.board[y + 2][x + 1].get_id() == id:
+                            if not self.board[y + 1][x - 1] and not self.board[y + 2][x - 1] and not self.board[y + 1][x + 1]:
+                                self.board[y][x], self.board[y + 2][x], self.board[y + 2][x + 1] = 0, 0, 0
+                                self.set_ceil(x - 1, y + 1, ceil)
+                                self.set_ceil(x - 1, y + 2, ceil)
+                                self.set_ceil(x + 1, y + 1, ceil)
+                                f = True
+                                self.render(screen, size)
+                                pygame.display.flip()
+                                break
+
+
 class Ceil:
     def __init__(self, color, last_id):
         self.color = color
@@ -236,7 +283,7 @@ if __name__ == '__main__':
 
     board = GameWindow(width, height)
     
-    fig = Figure(0, (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
+    fig = Figure(1, (randint(0, 255), randint(0, 255), randint(0, 255)), last_id)
 
     while running:
         for event in pygame.event.get():

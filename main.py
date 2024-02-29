@@ -1,6 +1,6 @@
 import pygame
 from random import randint
-
+import sqlite3
 
 class GameWindow:
     def __init__(self, width, height) -> None:
@@ -20,28 +20,54 @@ class GameWindow:
                                        (size[1] - self.height * self.cell_size) // 2 + y * self.cell_size))
                 pygame.draw.rect(screen, (255, 255, 255),
                                   ((size[0] - self.width * self.cell_size) // 2 + x * self.cell_size, 
-                                   (size[1] - self.height * self.cell_size) // 2 + y * self.cell_size, self.cell_size, self.cell_size), 1) 
-        
+                                   (size[1] - self.height * self.cell_size) // 2 + y * self.cell_size, self.cell_size, self.cell_size), 1)
+        text = f1.render(f'Очки: {str(points).zfill(4)}', True,
+                    (0, 180, 0))
+        screen.blit(text, (10, 320))
+        rec = cur.execute('''SELECT record FROM records WHERE difficult = ?''', (difficults[diff], )).fetchall()
+        text1 = f1.render(f'Рекорд: {str(int(rec[0][0])).zfill(4)}', True,
+                            (0, 180, 0))
+        screen.blit(text1, (10, 350))
     
     def set_ceil(self, x, y, ceil):
         if not self.board[y][x]:
             self.board[y][x] = ceil
             return False
         else:
+            global points
+            rec = cur.execute('''SELECT record FROM records WHERE difficult = ?''', (difficults[diff], )).fetchall()
+            if points > int(rec[0][0]):
+                cur.execute('''UPDATE records SET record = ? WHERE difficult = ?''', (points, difficults[diff]))
+                rec = [[points]]
+                con.commit()
             screen.fill((0, 0, 0))
             f1 = pygame.font.Font(None, 36)
-            text1 = f1.render('Press any button to continue game', True,
+            text1 = f1.render('Нажмите любую кнопку, чтобы начать заново', True,
                             (0, 180, 0))
-            screen.blit(text1, (100, 300))
+            screen.blit(text1, (30, 300))
+            text2 = f1.render(f'Ваши очки: {points}', True,
+                            (0, 180, 0))
+            screen.blit(text2, (220, 350))
+            text3 = f1.render(f'Рекорд: {int(rec[0][0])}', True,
+                            (0, 180, 0))
+            screen.blit(text3, (220, 400))
+            
             running = True
+            pygame.display.flip()
             while running:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
+                        running = False
+                        global running_main
+                        running_main = False
                         pygame.quit()
                     elif event.type == pygame.KEYDOWN:
                         self.board = [[0] * self.width for _ in range(self.height)].copy()
                         running = False
-                pygame.display.flip()
+                        global fig
+                        fig = Figure(randint(0, 6), randint(0, 6), last_id)
+                    
+            points = 0
             return True
 
                 
@@ -107,6 +133,8 @@ class GameWindow:
                 new_board.extend(self.board[:y])
                 new_board.extend(self.board[y + 1:])
                 self.board = new_board.copy()
+                global points
+                points += 10
         
     def figure_rotate(self, id, type, ceil):
         match type:
@@ -340,7 +368,8 @@ class Ceil:
                 if c_board[y][x]:
                     if c_board[y][x].get_id() == self.id_figure:
                         c_board[y][x].dieing()
-        global fig
+        global fig, points
+        points += 1
         board.check_tetris()
         fig = Figure(randint(0, 6),randint(0, 6), last_id)
 
@@ -365,11 +394,14 @@ class Figure:
         self.ceil = Ceil(self.colors[color], id)
         global last_id
         for i in self.types[type]:
-            
-            if board.set_ceil(i[1], i[0], self.ceil):
-                global fig
-                fig = Figure(randint(0, 6), randint(0, 6), last_id)
-                break
+            try:
+                if board.set_ceil(i[1], i[0], self.ceil):
+                    if not running_main:
+                        global fig
+                        fig = Figure(randint(0, 6), randint(0, 6), last_id)
+                    break
+            except pygame.error:
+                pass   
         last_id += 1
             
     def move_right(self, width, height, copy_board):
@@ -400,12 +432,24 @@ class Figure:
         board.figure_rotate(self.id, self.type, self.ceil)
 
 if __name__ == '__main__':
+    con = sqlite3.connect("tetris.db.sqlite")
+    cur = con.cursor()
+    cur.execute("""CREATE TABLE IF NOT EXISTS records (
+                                    id      INTEGER PRIMARY KEY,
+                                    difficult   TEXT,
+                                    record    INTEGER
+                        );
+                """)
+                
+    con.commit()
+
+
     pygame.init()
-    pygame.display.set_caption('Voice Tetris')
+    pygame.display.set_caption('Tetris')
     size = width, height = 600, 700
     screen = pygame.display.set_mode(size)
 
-    running = True
+    running_main = True
 
     fps = 4
     clock = pygame.time.Clock()
@@ -470,13 +514,25 @@ if __name__ == '__main__':
 
     points = 0
 
+    n = cur.execute('''SELECT * FROM  records''').fetchall()
+    if not n:
+        for i in range(4):
+            cur.execute('''INSERT INTO records(id, difficult, record) VALUES(?, ?, ?)''', \
+            (i, difficults[i], 0))
+        con.commit()
+    n = cur.execute('''SELECT * FROM  records''').fetchall()
+
     fig = Figure(randint(0, 6), randint(0, 6), last_id)
 
     pause = False
-    while running:
+    while running_main:
+        stop = False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                running_main = False
+                cur.close()
+                stop = True
+                break
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RIGHT and not pause:
                     fig.move_right(width, height, board.get_board())
@@ -486,12 +542,15 @@ if __name__ == '__main__':
                     fig.rotate()
                 if event.key == pygame.K_SPACE:
                     pause = not pause
+        if stop:
+            break
         if pause:
             continue
         board.render(screen, size)
         board.cells_down()
         clock.tick(fps)
         pygame.display.flip()
-
+    pygame.display.flip()
+    pygame.quit()
     
     #---------------------------
